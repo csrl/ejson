@@ -8,9 +8,9 @@
 value(Bin) ->
     case strip(Bin) of
         <<?LC:8/integer, Rest/binary>> ->
-            object(Rest, []);
+            object(strip(Rest), []);
         <<?LB:8/integer, Rest/binary>> ->
-            array(Rest, []);
+            array(strip(Rest), []);
         <<?DQ:8/integer, Rest/binary>> ->
             string(Rest, []);
         <<"false", Rest/binary>> ->
@@ -36,8 +36,10 @@ value(Bin) ->
 
 object(Bin, Acc) ->
     case pair(Bin) of
-        {Rest, close_obj} ->
-            {Rest, {lists:reverse(Acc)}};
+        {Rest, close_obj} when length(Acc) == 0 ->
+            {Rest, {[]}};
+        {_, close_obj} ->
+            ?EXIT({invalid_object, no_key_after_comma});
         {Rest, KVPair} ->
             case strip(Rest) of
                 <<?RC:8/integer, Rest2/binary>> ->
@@ -47,7 +49,6 @@ object(Bin, Acc) ->
                 <<>> ->
                     ?EXIT({invalid_object, no_more_data});
                 _ ->
-                    io:format("Rest: ~p, ~p~n", [Rest, strip(Rest)]),
                     ?EXIT({invalid_object, no_comma_or_close})
             end
     end.
@@ -73,24 +74,18 @@ pair(Bin) ->
             ?EXIT({invalid_object, no_key_or_close})
     end.
 
+array(<<>>, _) ->
+    ?EXIT({invalid_array, no_more_data});
+array(<<?CM:8/integer, Rest/binary>>, Acc) when length(Acc) > 0 ->
+    {Rest2, Value} = value(Rest),
+    array(strip(Rest2), [Value | Acc]);
 array(<<?RB:8/integer, Rest/binary>>, Acc) ->
     {Rest, lists:reverse(Acc)};
-array(Bin, Acc) ->
-    case value(Bin) of
-        {Rest, close_array} ->
-            {Rest, lists:reverse(Acc)};
-        {Rest, Val} ->
-            case strip(Rest) of
-                <<?RB:8/integer, Rest2/binary>> ->
-                    {Rest2, lists:reverse([Val | Acc])};
-                <<?CM:8/integer, Rest2/binary>> ->
-                    array(Rest2, [Val | Acc]);
-                <<>> ->
-                    ?EXIT({invalid_array, no_more_data});
-                _ ->
-                    ?EXIT({invalid_array, no_comma_or_close})
-            end
-    end.
+array(Bin, Acc) when length(Acc) == 0 ->
+    {Rest, Value} = value(Bin),
+    array(strip(Rest), [Value | Acc]);
+array(_, _) ->
+    ?EXIT({invalid_array, trailing_data}).
 
 string(Bin, Acc) ->
     case Bin of

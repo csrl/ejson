@@ -5,6 +5,9 @@ test: beam
 	test/literals.escript
 	test/numbers.escript
 	test/strings.escript
+	test/objects.escript
+	test/arrays.escript
+	test/compound.escript
 
 BUILT=\
     ebin/ejson.beam \
@@ -16,4 +19,4 @@ beam: $(BUILT)
 
 ebin/%.beam: src/%.erl
 	@mkdir -p ebin
-	erlc +bin_opt_info -o ebin/ $<
+	erlc -o ebin/ $<

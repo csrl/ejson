@@ -16,6 +16,16 @@ check_good() ->
         end,
     good()).
 
+check_errors() ->
+    lists:map(fun(E) ->
+        ok = case ejson:decode(E) of
+            {error, _} -> ok;
+            Error ->
+                io:format("Error: ~p~n", [E]),
+                Error
+        end
+    end, errors()).
+
 good() ->
     [
         {<<"0">>, 0},
@@ -27,22 +37,14 @@ good() ->
         {<<"2.4234324">>, 2.4234324},
         {<<"-3.1416">>, -3.1416},
         {<<"1E4">>, 10000.0, <<"1.0e4">>},
+        {<<"1.0E+01">>, 10.0, <<"10.0">>},
+        {<<"1e1">>, 10.0, <<"10.0">>},
         {<<"3.0E2">>, 300.0, <<"300.0">>},
         {<<"0E3">>, 0.0, <<"0.0">>},
         {<<"1.5E3">>, 1500.0, <<"1.5e3">>},
         {<<"1.5E-1">>, 0.15, <<"0.15">>},
         {<<"-0.323E+2">>, -32.3, <<"-32.3">>}
     ].
-
-check_errors() ->
-    lists:map(fun(E) ->
-        ok = case ejson:decode(E) of
-            {error, _} -> ok;
-            Error ->
-                io:format("Error: ~p~n", [E]),
-                Error
-        end
-    end, errors()).
 
 errors() ->
     [
