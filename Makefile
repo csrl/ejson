@@ -8,12 +8,14 @@ test: beam
 	test/objects.escript
 	test/arrays.escript
 	test/compound.escript
+	test/timing.escript
 
 BUILT=\
     ebin/ejson.beam \
 	ebin/ejson_decode.beam \
 	ebin/ejson_encode.beam \
-	ebin/mochijson2.beam
+	ebin/mochijson2.beam \
+	ebin/rfc4627.beam
 
 beam: $(BUILT)
 
