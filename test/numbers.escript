@@ -18,8 +18,8 @@ check_good() ->
 
 check_errors() ->
     lists:map(fun(E) ->
-        ok = case ejson:decode(E) of
-            {error, _} -> ok;
+        ok = case (catch ejson:decode(E)) of
+            {invalid_json, _} -> ok;
             Error ->
                 io:format("Error: ~p~n", [E]),
                 Error
