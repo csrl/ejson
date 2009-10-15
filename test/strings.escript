@@ -8,7 +8,9 @@ main([]) ->
 check_good() ->
     lists:map(fun
         ({J, E}) ->
-             E = ejson:decode(J),
+            io:format("DEC: ~p~n", [ejson:decode(J)]),
+            io:format("ENC: ~p~n", [ejson:decode(E)]),
+            E = ejson:decode(J),
             J = ejson:encode(E);
         ({J, E, J2}) ->
             E = ejson:decode(J),
@@ -31,6 +33,7 @@ good() ->
         {<<"\"\"">>, <<"">>},
         {<<"\"0\"">>, <<"0">>},
         {<<"\"foo\"">>, <<"foo">>},
+        {<<"\"\\\"foobar\\\"\"">>, <<"\"foobar\"">>},
         {<<"\"\\n\\n\\n\"">>, <<"\n\n\n">>},
         {<<"\"\\\" \\b\\f\\r\\n\\t\\\"\"">>, <<"\" \b\f\r\n\t\"">>},
         {<<"\"foo\\u0005bar\"">>, <<"foo", 5, "bar">>},

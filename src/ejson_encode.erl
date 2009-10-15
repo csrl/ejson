@@ -16,7 +16,10 @@ value(false) ->
 value(null) ->
     <<"null">>;
 value(S) when is_atom(S); is_binary(S) ->
-    string(S);
+    io:format("<- : ~p~n", [S]),
+    Ret = string(S),
+    io:format("RET: ~p~n", [Ret]),
+    Ret;
 value(I) when is_integer(I) ->
     list_to_binary(integer_to_list(I));
 value(F) when is_float(F) ->
@@ -79,6 +82,10 @@ string(Bin, Acc) ->
     end.
 
 fast_string(<<>>, Pos) ->
+    Pos;
+fast_string(<<C:8/integer, Rest/binary>>, Pos) when
+            C == ?DQ; C == ?RS; C == ?FS; C == ?BS;
+            C == ?FF; C == ?NL; C == ?CR; C == ?TB ->
     Pos;
 fast_string(<<C, Rest/binary>>, Pos) when C >= ?SP, C < 16#7F ->
     fast_string(Rest, Pos+1);
