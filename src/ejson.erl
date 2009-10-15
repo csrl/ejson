@@ -8,7 +8,7 @@ decode(Data) when is_list(Data) ->
 decode(Data) when is_binary(Data) ->
     case (catch ejson_decode:value(Data)) of
         {error, Reason} ->
-            {error, Reason};
+            throw({invalid_json, Reason});
         {_Rest, EJson} ->
             EJson
     end.
@@ -16,7 +16,7 @@ decode(Data) when is_binary(Data) ->
 encode(Term) ->
     case (catch ejson_encode:value(Term)) of
         {error, Reason} ->
-            {error, Reason};
+            throw({invalid_erljson, Reason});
         Else ->
             Else
     end.
