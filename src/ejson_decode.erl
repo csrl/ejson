@@ -27,6 +27,10 @@ value(Bin) ->
                     flt_number(Rest, [First]);
                 _ when First > ?ZR andalso First =< ?NI ->
                     number(Rest, [First]);
+                ?PL ->
+                    ?EXIT({invalid_number, plus_prefix_is_invalid});
+                ?PR ->
+                    ?EXIT({invalid_number, decimals_require_a_zero});
                 _ ->
                     ?EXIT({invalid_value, no_decodable_value})
             end;
@@ -213,7 +217,7 @@ number(<<First:8/integer, Rest/binary>>, Acc) ->
                     Value = list_to_integer(lists:reverse(Acc)),
                     {<<First:8/integer, Rest/binary>>, Value};
                 _ ->
-                    ?EXIT({invalid_number, leading_zero})
+                    ?EXIT({invalid_number, invalid_digit})
             end
     end.
 
@@ -248,6 +252,13 @@ flt_number(<<?UE:8/integer, Rest/binary>>, [?ZR]) ->
     exp_sign(Rest, [?UE, ?ZR, ?PR, ?ZR]);
 flt_number(<<?LE:8/integer, Rest/binary>>, [?ZR]) ->
     exp_sign(Rest, [?LE, ?ZR, ?PR, ?ZR]);
+flt_number(<<?PR:8/integer, First:8/integer, Rest/binary>>, [?ZR]) ->
+    case First of
+        _ when First >= ?ZR andalso First =< ?NI ->
+            frac_number(Rest, [First, ?PR, ?ZR]);
+        _ ->
+            ?EXIT({invalid_number, not_digit_after_decimal})
+    end;
 flt_number(<<First:8/integer, Rest/binary>>, [?ZR]) ->
     case lists:member(First, [?TB, ?NL, ?CR, ?SP, ?CM, ?RB, ?RC]) of
         true ->
@@ -283,7 +294,7 @@ frac_number(<<First:8/integer, Rest/binary>>=Bin, Acc) ->
     end.
 
 exp_sign(<<>>, _) ->
-    ?EXIT({invalid_number, no_more_data});
+    ?EXIT({invalid_number, invalid_exponent});
 exp_sign(<<?PL:8/integer, Rest/binary>>, Acc) ->
     exp_number(Rest, Acc);
 exp_sign(<<?HY:8/integer, Rest/binary>>, Acc) ->
@@ -298,14 +309,19 @@ exp_number(<<First:8/integer, Rest/binary>>, Acc) ->
         _ when First >= ?ZR andalso First =< ?NI ->
             exp_number(Rest, [First | Acc]);
         _ ->
-            case Acc of
-                [?UE|_] ->
-                    ?EXIT({invalid_number, no_exponent_after_e});
-                [?LE|_] ->
-                    ?EXIT({invalid_number, no_exponent_after_e});
+            case lists:member(First, [?TB, ?NL, ?CR, ?SP, ?CM, ?RB, ?RC]) of
+                true ->
+                    case Acc of
+                        [?UE|_] ->
+                            ?EXIT({invalid_number, no_exponent_after_e});
+                        [?LE|_] ->
+                            ?EXIT({invalid_number, no_exponent_after_e});
+                        _ ->
+                            Value = erlang:list_to_float(lists:reverse(Acc)),
+                            {<<First:8/integer, Rest/binary>>, Value}
+                    end;
                 _ ->
-                    Value = erlang:list_to_float(lists:reverse(Acc)),
-                    {<<First:8/integer, Rest/binary>>, Value}
+                    ?EXIT({invalid_number, invalid_digit_in_exponent})
             end
     end.
 
