@@ -1,4 +1,3 @@
-
 -module(ejson).
 
 -export([decode/1, encode/1]).
@@ -12,7 +11,7 @@ decode(Data) when is_binary(Data) ->
         {_Rest, EJson} ->
             EJson
     end.
-    
+
 encode(Term) ->
     case (catch ejson_encode:value(Term)) of
         {error, Reason} ->

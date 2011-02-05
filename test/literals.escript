@@ -25,6 +25,4 @@ null() ->
     case ejson:encode(null) of
         <<"null">> -> ok;
         Error -> throw({invalid_result, Error})
-    end.    
-
-
+    end.

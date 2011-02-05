@@ -121,4 +121,3 @@ hex_digit(D) when D >= 0, D =< 9 ->
     $0 + D;
 hex_digit(D) when D >= 10, D =< 15 ->
     $A + (D - 10).
-

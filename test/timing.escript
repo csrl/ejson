@@ -2,6 +2,7 @@
 
 main([]) ->
     code:add_pathz("ebin/"),
+    code:add_pathz("test/"),
     Cases = read_cases("test/timing.json"),
     io:format("Timing runs...~n", []),
     run(ejson, Cases),
