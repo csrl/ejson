@@ -123,7 +123,7 @@ string(Bin, Acc) ->
                     string(Rest, [Fast | Acc]);
                 _ ->
                     ?EXIT({invalid_string, unknown_escape})
-            end     
+            end
     end.
 
 unicode_escape(Bin) ->

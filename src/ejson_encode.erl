@@ -75,7 +75,7 @@ string(Bin, Acc) ->
                 _ ->
                     {Rest, Escaped} = unicode_escape(Bin),
                     string(Rest, [Escaped | Acc])
-            end     
+            end
     end.
 
 fast_string(<<>>, Pos) ->
