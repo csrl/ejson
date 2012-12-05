@@ -84,14 +84,14 @@ fast_string(<<C:8/integer, _/binary>>, Pos) when
             C == ?DQ; C == ?RS; C == ?FS; C == ?BS;
             C == ?FF; C == ?NL; C == ?CR; C == ?TB ->
     Pos;
-fast_string(<<C, Rest/binary>>, Pos) when C >= ?SP, C < 16#7F ->
+fast_string(<<C, Rest/binary>>, Pos) when C > 16#1F, C < 16#7F ->
     fast_string(Rest, Pos+1);
 fast_string(_, Pos) ->
     Pos.
 
 unicode_escape(Bin) ->
     case Bin of
-        <<D:8/integer, Rest/binary>> when D =< ?SP ->
+        <<D:8/integer, Rest/binary>> when D =< 16#1F; D =:= 16#7F ->
             {Rest, hex_escape(D)};
         <<6:3/integer, C1:5/bits, 2:2/integer, C2:6/bits, Rest/binary>> ->
             <<C:16/integer>> = <<0:5/integer, C1:5/bits, C2:6/bits>>,
