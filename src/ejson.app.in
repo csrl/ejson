@@ -14,3 +14,4 @@ ${MODULES}
   {registered, []},
   {applications, [kernel, stdlib]}
 ]}.
+EOF
