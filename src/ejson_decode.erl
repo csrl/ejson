@@ -7,11 +7,11 @@
 
 value(Bin) ->
     case strip(Bin) of
-        <<?LC:8/integer, Rest/binary>> ->
+        <<?LC, Rest/binary>> ->
             object(strip(Rest), []);
-        <<?LB:8/integer, Rest/binary>> ->
+        <<?LB, Rest/binary>> ->
             array(strip(Rest), []);
-        <<?DQ:8/integer, Rest/binary>> ->
+        <<?DQ, Rest/binary>> ->
             string(Rest, []);
         <<"false", Rest/binary>> ->
             {Rest, false};
@@ -19,7 +19,7 @@ value(Bin) ->
             {Rest, true};
         <<"null", Rest/binary>> ->
             {Rest, null};
-        <<First:8/integer, Rest/binary>> ->
+        <<First, Rest/binary>> ->
             case First of
                 ?HY ->
                     neg_number(Rest, [First]);
@@ -46,9 +46,9 @@ object(Bin, Acc) ->
             ?EXIT({invalid_object, no_key_after_comma});
         {Rest, KVPair} ->
             case strip(Rest) of
-                <<?RC:8/integer, Rest2/binary>> ->
+                <<?RC, Rest2/binary>> ->
                     {strip(Rest2), {lists:reverse([KVPair | Acc])}};
-                <<?CM:8/integer, Rest2/binary>> ->
+                <<?CM, Rest2/binary>> ->
                     object(strip(Rest2), [KVPair | Acc]);
                 <<>> ->
                     ?EXIT({invalid_object, no_more_data});
@@ -59,12 +59,12 @@ object(Bin, Acc) ->
 
 pair(Bin) ->
     case strip(Bin) of
-        <<?RC:8/integer, Rest/binary>> ->
+        <<?RC, Rest/binary>> ->
             {Rest, close_obj};
-        <<?DQ:8/integer, Rest/binary>> ->
+        <<?DQ, Rest/binary>> ->
             {Rest2, Key} = string(Rest, []),
             case strip(Rest2) of
-                <<?CL:8/integer, Rest3/binary>> ->
+                <<?CL, Rest3/binary>> ->
                     {Rest4, Val} = value(Rest3),
                     {Rest4, {Key, Val}};
                 <<>> ->
@@ -80,10 +80,10 @@ pair(Bin) ->
 
 array(<<>>, _) ->
     ?EXIT({invalid_array, no_more_data});
-array(<<?CM:8/integer, Rest/binary>>, Acc) when length(Acc) > 0 ->
+array(<<?CM, Rest/binary>>, Acc) when length(Acc) > 0 ->
     {Rest2, Value} = value(Rest),
     array(strip(Rest2), [Value | Acc]);
-array(<<?RB:8/integer, Rest/binary>>, Acc) ->
+array(<<?RB, Rest/binary>>, Acc) ->
     {Rest, lists:reverse(Acc)};
 array(Bin, Acc) when length(Acc) == 0 ->
     {Rest, Value} = value(Bin),
@@ -93,25 +93,25 @@ array(_, _) ->
 
 string(Bin, Acc) ->
     case Bin of
-        <<?DQ:8/integer, Rest/binary>> ->
+        <<?DQ, Rest/binary>> ->
             {Rest, list_to_binary(lists:reverse(Acc))};
-        <<?ESDQ:16/integer, Rest/binary>> ->
-            string(Rest, [<<?DQ:8/integer>> | Acc]);
-        <<?ESRS:16/integer, Rest/binary>> ->
-            string(Rest, [<<?RS:8/integer>> | Acc]);
-        <<?ESFS:16/integer, Rest/binary>> ->
-            string(Rest, [<<?FS:8/integer>> | Acc]);
-        <<?ESBS:16/integer, Rest/binary>> ->
-            string(Rest, [<<?BS:8/integer>> | Acc]);
-        <<?ESFF:16/integer, Rest/binary>> ->
-            string(Rest, [<<?FF:8/integer>> | Acc]);
-        <<?ESNL:16/integer, Rest/binary>> ->
-            string(Rest, [<<?NL:8/integer>> | Acc]);
-        <<?ESCR:16/integer, Rest/binary>> ->
-            string(Rest, [<<?CR:8/integer>> | Acc]);
-        <<?ESTB:16/integer, Rest/binary>> ->
-            string(Rest, [<<?TB:8/integer>> | Acc]);
-        <<?ESUE:16/integer, Rest/binary>> ->
+        <<?ESDQ:16, Rest/binary>> ->
+            string(Rest, [<<?DQ>> | Acc]);
+        <<?ESRS:16, Rest/binary>> ->
+            string(Rest, [<<?RS>> | Acc]);
+        <<?ESFS:16, Rest/binary>> ->
+            string(Rest, [<<?FS>> | Acc]);
+        <<?ESBS:16, Rest/binary>> ->
+            string(Rest, [<<?BS>> | Acc]);
+        <<?ESFF:16, Rest/binary>> ->
+            string(Rest, [<<?FF>> | Acc]);
+        <<?ESNL:16, Rest/binary>> ->
+            string(Rest, [<<?NL>> | Acc]);
+        <<?ESCR:16, Rest/binary>> ->
+            string(Rest, [<<?CR>> | Acc]);
+        <<?ESTB:16, Rest/binary>> ->
+            string(Rest, [<<?TB>> | Acc]);
+        <<?ESUE:16, Rest/binary>> ->
             {Rest2, Unescaped} = unicode_escape(Rest),
             string(Rest2, [Unescaped | Acc]);
         <<>> ->
@@ -128,15 +128,15 @@ string(Bin, Acc) ->
 
 unicode_escape(Bin) ->
     case Bin of
-        <<C1, C2, C3, C4, ?RS:8/integer, "u", D1, D2, D3, D4, Rest/binary>> ->
+        <<C1, C2, C3, C4, ?RS, "u", D1, D2, D3, D4, Rest/binary>> ->
             C = erlang:list_to_integer([C1, C2, C3, C4], 16),
             D = erlang:list_to_integer([D1, D2, D3, D4], 16),
-            BinCodePoint = <<C:16/unsigned-integer, D:16/unsigned-integer>>,
+            BinCodePoint = <<C:16, D:16>>,
             case (catch xmerl_ucs:from_utf16be(BinCodePoint)) of
                 [CodePoint] ->
                     {Rest, list_to_binary(xmerl_ucs:to_utf8(CodePoint))};
                 _Else ->
-                    Rest2 = <<?RS:8/integer, "u", D1, D2, D3, D4, Rest/binary>>,
+                    Rest2 = <<?RS, "u", D1, D2, D3, D4, Rest/binary>>,
                     {Rest2, crap_point(C)}
             end;
         <<C1, C2, C3, C4, Rest/binary>> ->
@@ -153,26 +153,24 @@ unicode_escape(Bin) ->
 
 % http://en.wikipedia.org/wiki/UTF-8#Description
 crap_point(C) when C =< 16#7F ->
-    <<C:16/integer>>;
+    <<C:16>>;
 crap_point(C) when C =< 16#7FF ->
-    <<0:5/integer, C1:5/bits, C2:6/bits>> = <<C:16/integer>>,
-    <<6:3/integer, C1:5/bits, 2:2/integer, C2:6/bits>>;
+    <<0:5, C1:5/bits, C2:6/bits>> = <<C:16>>,
+    <<6:3, C1:5/bits, 2:2, C2:6/bits>>;
 crap_point(C) when C =< 16#FFFF ->
-    <<C1:4/bits, C2:6/bits, C3:6/bits>> = <<C:16/integer>>,
-    <<14:4/integer, C1:4/bits, 2:2/integer, C2:6/bits, 2:2/integer, C3:6/bits>>;
+    <<C1:4/bits, C2:6/bits, C3:6/bits>> = <<C:16>>,
+    <<14:4, C1:4/bits, 2:2, C2:6/bits, 2:2, C3:6/bits>>;
 crap_point(C) when C =< 16#1FFFFF ->
-    C0 = <<C:32/integer>>,
-    <<0:11/integer, C1:3/bits, C2:6/bits, C3:6/bits, C4:6/bits>> = C0,
-    <<30:5/integer, C1:3/bits, 2:2/integer, C2:6/bits,
-            2:2/integer, C3:6/bits, 2:2/integer, C4:6/bits>>;
+    <<0:11, C1:3/bits, C2:6/bits, C3:6/bits, C4:6/bits>> = <<C:32>>,
+    <<30:5, C1:3/bits, 2:2, C2:6/bits, 2:2, C3:6/bits, 2:2, C4:6/bits>>;
 crap_point(_) ->
     ?EXIT({invalid_rfc, email_douglas_crockford_to_complain}).
 
 fast_string(<<>>, _) ->
     ?EXIT({invalid_string, no_more_data});
-fast_string(<<?DQ:8/integer, _/binary>>, Pos) ->
+fast_string(<<?DQ, _/binary>>, Pos) ->
     Pos;
-fast_string(<<?RS:8/integer, _/binary>>, Pos) ->
+fast_string(<<?RS, _/binary>>, Pos) ->
     Pos;
 
 % Checking UTF-8
@@ -203,10 +201,10 @@ fast_string(Bin, Pos) ->
 
 number(<<>>, Acc) ->
     {<<>>, list_to_integer(lists:reverse(Acc))};
-number(<<First:8/integer, Rest/binary>>, Acc) ->
+number(<<First, Rest/binary>>, Acc) ->
     case First of
         ?PR ->
-            flt_number(<<First:8/integer, Rest/binary>>, Acc);
+            flt_number(<<First, Rest/binary>>, Acc);
         _ when First >= ?ZR andalso First =< ?NI ->
             number(Rest, [First | Acc]);
         _ when First =:= ?UE orelse First =:= ?LE ->
@@ -215,7 +213,7 @@ number(<<First:8/integer, Rest/binary>>, Acc) ->
             case lists:member(First, [?TB, ?NL, ?CR, ?SP, ?CM, ?RB, ?RC]) of
                 true ->
                     Value = list_to_integer(lists:reverse(Acc)),
-                    {<<First:8/integer, Rest/binary>>, Value};
+                    {<<First, Rest/binary>>, Value};
                 _ ->
                     ?EXIT({invalid_number, invalid_digit})
             end
@@ -225,12 +223,12 @@ neg_number(<<>>, [?HY]) ->
     ?EXIT({invalid_number, lonely_hyphen});
 neg_number(<<>>, Acc) ->
     {<<>>, list_to_integer(lists:reverse(Acc))};
-neg_number(<<?ZR:8/integer, Rest/binary>>, Acc) ->
+neg_number(<<?ZR, Rest/binary>>, Acc) ->
     flt_number(Rest, [?ZR | Acc]);
-neg_number(<<First:8/integer, Rest/binary>>, Acc) ->
+neg_number(<<First, Rest/binary>>, Acc) ->
     case First of
         ?PR ->
-            flt_number(<<First:8/integer, Rest/binary>>, Acc);
+            flt_number(<<First, Rest/binary>>, Acc);
         _ when First > ?ZR andalso First =< ?NI ->
             number(Rest, [First | Acc]);
         _ when First =:= ?UE orelse First =:= ?LE ->
@@ -239,7 +237,7 @@ neg_number(<<First:8/integer, Rest/binary>>, Acc) ->
             case lists:member(First, [?TB, ?NL, ?CR, ?SP, ?CM, ?RB, ?RC]) of
                 true ->
                     Value = list_to_integer(lists:reverse(Acc)),
-                    {<<First:8/integer, Rest/binary>>, Value};
+                    {<<First, Rest/binary>>, Value};
                 _ ->
                     ?EXIT({invalid_number, leading_zero})
             end
@@ -248,42 +246,42 @@ neg_number(<<First:8/integer, Rest/binary>>, Acc) ->
 % Special cases for <<"0">>, <<"0E3">>, etc.
 flt_number(<<>>, [?ZR]) ->
     {<<>>, 0};
-flt_number(<<?UE:8/integer, Rest/binary>>, [?ZR]) ->
+flt_number(<<?UE, Rest/binary>>, [?ZR]) ->
     exp_sign(Rest, [?UE, ?ZR, ?PR, ?ZR]);
-flt_number(<<?LE:8/integer, Rest/binary>>, [?ZR]) ->
+flt_number(<<?LE, Rest/binary>>, [?ZR]) ->
     exp_sign(Rest, [?LE, ?ZR, ?PR, ?ZR]);
-flt_number(<<?PR:8/integer, First:8/integer, Rest/binary>>, [?ZR]) ->
+flt_number(<<?PR, First, Rest/binary>>, [?ZR]) ->
     case First of
         _ when First >= ?ZR andalso First =< ?NI ->
             frac_number(Rest, [First, ?PR, ?ZR]);
         _ ->
             ?EXIT({invalid_number, not_digit_after_decimal})
     end;
-flt_number(<<First:8/integer, Rest/binary>>, [?ZR]) ->
+flt_number(<<First, Rest/binary>>, [?ZR]) ->
     case lists:member(First, [?TB, ?NL, ?CR, ?SP, ?CM, ?RB, ?RC]) of
         true ->
-            {<<First:8/integer, Rest/binary>>, 0};
+            {<<First, Rest/binary>>, 0};
         _ ->
             ?EXIT({invalid_number, leading_zero})
     end;
 
 flt_number(<<>>, _Acc) ->
     ?EXIT({invalid_number, no_more_data});
-flt_number(<<?PR:8/integer>>, _) ->
+flt_number(<<?PR>>, _) ->
     ?EXIT({invalid_number, missing_fraction});
-flt_number(<<?PR:8/integer, First:8/integer, Rest/binary>>, Acc) ->
+flt_number(<<?PR, First, Rest/binary>>, Acc) ->
     case First of
         _ when First >= ?ZR andalso First =< ?NI ->
             frac_number(Rest, [First, ?PR | Acc]);
         _ ->
             ?EXIT({invalid_number, not_digit_after_decimal})
     end;
-flt_number(<<First:8/integer, _/binary>>, Acc) ->
+flt_number(<<First, _/binary>>, Acc) ->
     ?EXIT({invalid_number, lists:reverse([First | Acc])}).
 
 frac_number(<<>>, Acc) ->
     {<<>>, list_to_float(lists:reverse(Acc))};
-frac_number(<<First:8/integer, Rest/binary>>=Bin, Acc) ->
+frac_number(<<First, Rest/binary>>=Bin, Acc) ->
     case First of
         _ when First >= ?ZR andalso First =< ?NI ->
             frac_number(Rest, [First | Acc]);
@@ -295,16 +293,16 @@ frac_number(<<First:8/integer, Rest/binary>>=Bin, Acc) ->
 
 exp_sign(<<>>, _) ->
     ?EXIT({invalid_number, invalid_exponent});
-exp_sign(<<?PL:8/integer, Rest/binary>>, Acc) ->
+exp_sign(<<?PL, Rest/binary>>, Acc) ->
     exp_number(Rest, Acc);
-exp_sign(<<?HY:8/integer, Rest/binary>>, Acc) ->
+exp_sign(<<?HY, Rest/binary>>, Acc) ->
     exp_number(Rest, [?HY | Acc]);
 exp_sign(Bin, Acc) ->
     exp_number(Bin, Acc).
 
 exp_number(<<>>, Acc) ->
     {<<>>, list_to_float(lists:reverse(Acc))};
-exp_number(<<First:8/integer, Rest/binary>>, Acc) ->
+exp_number(<<First, Rest/binary>>, Acc) ->
     case First of
         _ when First >= ?ZR andalso First =< ?NI ->
             exp_number(Rest, [First | Acc]);
@@ -318,20 +316,20 @@ exp_number(<<First:8/integer, Rest/binary>>, Acc) ->
                             ?EXIT({invalid_number, no_exponent_after_e});
                         _ ->
                             Value = erlang:list_to_float(lists:reverse(Acc)),
-                            {<<First:8/integer, Rest/binary>>, Value}
+                            {<<First, Rest/binary>>, Value}
                     end;
                 _ ->
                     ?EXIT({invalid_number, invalid_digit_in_exponent})
             end
     end.
 
-strip(<<?TB:8/integer, Rest/binary>>) ->
+strip(<<?TB, Rest/binary>>) ->
     strip(Rest);
-strip(<<?NL:8/integer, Rest/binary>>) ->
+strip(<<?NL, Rest/binary>>) ->
     strip(Rest);
-strip(<<?CR:8/integer, Rest/binary>>) ->
+strip(<<?CR, Rest/binary>>) ->
     strip(Rest);
-strip(<<?SP:8/integer, Rest/binary>>) ->
+strip(<<?SP, Rest/binary>>) ->
     strip(Rest);
 strip(Bin) ->
     Bin.
