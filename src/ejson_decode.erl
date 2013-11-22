@@ -155,14 +155,14 @@ unicode_escape(Bin) ->
 crap_point(C) when C =< 16#7F ->
     <<C:16>>;
 crap_point(C) when C =< 16#7FF ->
-    <<0:5, C1:5/bits, C2:6/bits>> = <<C:16>>,
-    <<6:3, C1:5/bits, 2:2, C2:6/bits>>;
+    <<0:5, C1:5, C2:6>> = <<C:16>>,
+    <<6:3, C1:5, 2:2, C2:6>>;
 crap_point(C) when C =< 16#FFFF ->
-    <<C1:4/bits, C2:6/bits, C3:6/bits>> = <<C:16>>,
-    <<14:4, C1:4/bits, 2:2, C2:6/bits, 2:2, C3:6/bits>>;
+    <<C1:4, C2:6, C3:6>> = <<C:16>>,
+    <<14:4, C1:4, 2:2, C2:6, 2:2, C3:6>>;
 crap_point(C) when C =< 16#1FFFFF ->
-    <<0:11, C1:3/bits, C2:6/bits, C3:6/bits, C4:6/bits>> = <<C:32>>,
-    <<30:5, C1:3/bits, 2:2, C2:6/bits, 2:2, C3:6/bits, 2:2, C4:6/bits>>;
+    <<0:11, C1:3, C2:6, C3:6, C4:6>> = <<C:32>>,
+    <<30:5, C1:3, 2:2, C2:6, 2:2, C3:6, 2:2, C4:6>>;
 crap_point(_) ->
     ?EXIT({invalid_rfc, email_douglas_crockford_to_complain}).
 

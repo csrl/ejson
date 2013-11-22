@@ -93,14 +93,14 @@ unicode_escape(Bin) ->
     case Bin of
         <<D, Rest/binary>> when D =< 16#1F; D =:= 16#7F ->
             {Rest, hex_escape(D)};
-        <<6:3, C1:5/bits, 2:2, C2:6/bits, Rest/binary>> ->
-            <<C:16>> = <<0:5, C1:5/bits, C2:6/bits>>,
+        <<6:3, C1:5, 2:2, C2:6, Rest/binary>> ->
+            <<C:16>> = <<0:5, C1:5, C2:6>>,
             {Rest, hex_escape(C)};
-        <<14:4, C1:4/bits, 2:2, C2:6/bits, 2:2, C3:6/bits, Rest/binary>> ->
-            <<C:16>> = <<C1:4/bits, C2:6/bits, C3:6/bits>>,
+        <<14:4, C1:4, 2:2, C2:6, 2:2, C3:6, Rest/binary>> ->
+            <<C:16>> = <<C1:4, C2:6, C3:6>>,
             {Rest, hex_escape(C)};
-        <<30:5, C1:3/bits, 2:2, C2:6/bits, 2:2, C3:6/bits, 2:2, C4:6/bits, Rest/binary>> ->
-            <<C:32>> = <<0:11, C1:3/bits, C2:6/bits, C3:6/bits, C4:6/bits>>,
+        <<30:5, C1:3, 2:2, C2:6, 2:2, C3:6, 2:2, C4:6, Rest/binary>> ->
+            <<C:32>> = <<0:11, C1:3, C2:6, C3:6, C4:6>>,
             {Rest, hex_escape(C)};
         _ ->
             ?EXIT(invalid_utf8)
