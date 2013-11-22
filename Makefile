@@ -1,5 +1,5 @@
 LIBDIR=$(shell erl -eval 'io:format("~s~n", [code:lib_dir()])' -s init stop -noshell)
-VERSION=0.2.0
+VERSION=0.2.1
 PKGNAME=ejson
 
 all: app beam
