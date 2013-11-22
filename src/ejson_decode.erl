@@ -155,14 +155,14 @@ unicode_escape(Bin) ->
 crap_point(C) when C =< 16#7F ->
     <<C:16/integer>>;
 crap_point(C) when C =< 16#7FF ->
-    <<0:5/bits, C1:5/bits, C2:6/bits>> = <<C:16/integer>>,
+    <<0:5/integer, C1:5/bits, C2:6/bits>> = <<C:16/integer>>,
     <<6:3/integer, C1:5/bits, 2:2/integer, C2:6/bits>>;
 crap_point(C) when C =< 16#FFFF ->
     <<C1:4/bits, C2:6/bits, C3:6/bits>> = <<C:16/integer>>,
     <<14:4/integer, C1:4/bits, 2:2/integer, C2:6/bits, 2:2/integer, C3:6/bits>>;
 crap_point(C) when C =< 16#1FFFFF ->
     C0 = <<C:32/integer>>,
-    <<0:11/bits, C1:3/bits, C2:6/bits, C3:6/bits, C4:6/bits>> = C0,
+    <<0:11/integer, C1:3/bits, C2:6/bits, C3:6/bits, C4:6/bits>> = C0,
     <<30:5/integer, C1:3/bits, 2:2/integer, C2:6/bits,
             2:2/integer, C3:6/bits, 2:2/integer, C4:6/bits>>;
 crap_point(_) ->
