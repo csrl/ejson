@@ -128,7 +128,7 @@ string(Bin, Acc) ->
 
 unicode_escape(Bin) ->
     case Bin of
-        <<C1, C2, C3, C4, ?RS, "u", D1, D2, D3, D4, Rest/binary>> ->
+        <<C1, C2, C3, C4, ?ESUE:16, D1, D2, D3, D4, Rest/binary>> ->
             C = erlang:list_to_integer([C1, C2, C3, C4], 16),
             D = erlang:list_to_integer([D1, D2, D3, D4], 16),
             BinCodePoint = <<C:16, D:16>>,
@@ -136,7 +136,7 @@ unicode_escape(Bin) ->
                 [CodePoint] ->
                     {Rest, list_to_binary(xmerl_ucs:to_utf8(CodePoint))};
                 _Else ->
-                    Rest2 = <<?RS, "u", D1, D2, D3, D4, Rest/binary>>,
+                    Rest2 = <<?ESUE:16, D1, D2, D3, D4, Rest/binary>>,
                     {Rest2, crap_point(C)}
             end;
         <<C1, C2, C3, C4, Rest/binary>> ->
@@ -197,7 +197,6 @@ fast_string(Bin, Pos) ->
         _ ->
             ?EXIT({invalid_string, invalid_utf_8})
     end.
-
 
 number(<<>>, Acc) ->
     {<<>>, list_to_integer(lists:reverse(Acc))};

@@ -18,7 +18,7 @@ value(null) ->
 value(S) when is_atom(S); is_binary(S) ->
     string(S);
 value(I) when is_integer(I) ->
-    list_to_binary(integer_to_list(I));
+    integer_to_binary(I);
 value(F) when is_float(F) ->
     list_to_binary(io_lib:format("~p", [F]));
 value(B) ->
@@ -41,7 +41,7 @@ array([V | Rest], Acc) ->
     array(Rest, [value(V), <<?CM>> | Acc]).
 
 string(A) when is_atom(A) ->
-    string(list_to_binary(atom_to_list(A)), [<<?DQ>>]);
+    string(atom_to_binary(A, utf8), [<<?DQ>>]);
 string(B) when is_binary(B) ->
     string(B, [<<?DQ>>]);
 string(Bad) ->
@@ -108,7 +108,7 @@ unicode_escape(Bin) ->
 
 hex_escape(C) when C =< 16#FFFF ->
     <<C1:4, C2:4, C3:4, C4:4>> = <<C:16>>,
-    ["\\u"] ++ [hex_digit(C0) || C0 <- [C1, C2, C3, C4]];
+    "\\u" ++ [hex_digit(C0) || C0 <- [C1, C2, C3, C4]];
 hex_escape(C) ->
     BinCodePoint = list_to_binary(xmerl_ucs:to_utf16be(C)),
     <<D:16, E:16>> = BinCodePoint,
